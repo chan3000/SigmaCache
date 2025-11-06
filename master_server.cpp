@@ -1,75 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <bits/stdc++.h>
+#include "cpp-httplib/httplib.h"
+#include "cache_metadata.h"
 
+using namespace std;
 
-void error(char *msg)
-{
-	perror(msg);
-	exit(1);
-}
+int main() {
+	httplib::Server svr;
 
-#define MAX_BACKLOG_SIZE 5
+	/* Hardcoded Cache server details */
+	int num_cache_servers = 2;
+	cache_metadata* all_cache_servers = (cache_metadata*)malloc(num_cache_servers * sizeof(cache_metadata));
+	strcpy(all_cache_servers[0].ip_address, "localhost");
+	all_cache_servers[0].port = 5051;
+	all_cache_servers[0].start_key = 1;
+	all_cache_servers[0].end_key = 100; 
 
-// Define a custom struct to talk to the client and server
+	strcpy(all_cache_servers[1].ip_address, "localhost");
+	all_cache_servers[1].port = 5052;
+	all_cache_servers[1].start_key = 101;
+	all_cache_servers[1].end_key = 200;
 
-int main(int argc, char *argv[])
-{
-	int sockfd, newsockfd, portno, clilen;
-	char buffer[256];
-	struct sockaddr_in serv_addr, cli_addr;
-	int n1, n2;
-	if (argc < 2) {
-		fprintf(stderr,"ERROR, no port provided\n");
-		exit(1);
-	}
+	/* Client requests the cache server detauls at this end-point */
+	svr.Get("/initiate", [&](const httplib::Request& req, httplib::Response& res) {
+		string binary_data(reinterpret_cast<const char*>(all_cache_servers), num_cache_servers * sizeof(cache_metadata));
+		res.set_content(binary_data, "application/octet-stream");
+	});
 
-	/* create socket */
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0) 
-	error("ERROR opening socket");
-
-	/* fill in port number to listen on. IP address can be anything (INADDR_ANY) */
-
-	bzero((char *) &serv_addr, sizeof(serv_addr));
-	portno = atoi(argv[1]);
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);
-
-	/* bind socket to this port number on this machine */
-
-	if (bind(sockfd, (struct sockaddr *) &serv_addr,
-			sizeof(serv_addr)) < 0) 
-			error("ERROR on binding");
-	
-	/* listen for incoming connection requests */
-
-	listen(sockfd, MAX_BACKLOG_SIZE);
-	clilen = sizeof(cli_addr);
-
-	/* accept a new request, create a newsockfd */
-
-	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-	if (newsockfd < 0) 
-		error("ERROR on accept");
-
-	/* read message from client */
-
-	do {
-		bzero(buffer,256);
-		n1 = read(newsockfd,buffer,255);
-		if (n1 < 0) error("ERROR reading from socket");
-		printf("Here is the message: %s\n",buffer);
-
-		/* send reply to client */
-		
-		n2 = write(newsockfd,"I got your message",18);
-		if (n2 < 0) error("ERROR writing to socket");
-	} while (n1 > 0 && n2 > 0);
-	
-	return 0; 
+	std::cout << "Server starting on http://localhost:5050" << std::endl;
+	svr.listen("0.0.0.0", 5050);
 }
