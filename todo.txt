@@ -1,0 +1,63 @@
+-> Master Server: 
+    -> Send cache server details to new client  - DONE 
+    -> Cache server registration logic
+        -> Assign key range to each cache
+            -> This approach is static, in real time think about how the client will dynamically select the
+            cache based on the load, this client side logic, low priority, more complexity in implementation
+                -> Think about cache synchronization
+
+-> Cache Server:
+    -> Cache server registers to master server: 
+        -> Sends the IP address and the port no
+            -> Low Priority, low complexity
+                -> For time being the values hardcoded in master server  
+        -> Receives the key range? 
+            -> The cache does not need to know the key range, client must track this
+    
+    -> Each cache server has its own database shard.
+        -> Single replica of database shard
+            -> High Priority, low complexity
+        -> Can the cache servers be replicated? 
+            -> Replication not for reliability but for load balancing
+                -> Overhead of synchronization across replicas
+                    -> Low priority, High complexity   
+    
+    -> Replacement policy:
+        -> Implement LRU Cache Replacement policy
+            -> High Priority, medium complexity
+    
+    -> Inline Cache
+        -> Write back policy
+            -> Cache line evicted when cache full
+        -> Size of the cache?
+            -> Try out some values, some fraction of the key range
+
+    -> In-memory Storage
+        -> Unordered Map 
+
+    -> Concurrent read Exclusive write policy
+        -> Use read-write locks
+            -> High Priority, low complexity
+        -> Fine grained locks
+            -> Locks for individual keys, not for the entire table
+                -> More keys -> more locks? Check if this is feasible in real time
+        -> Use optimistic locks
+            -> Low Priority, medium complexity
+                -> Check out for implementation bugs - race condition, deadlock bugs
+
+    -> Which database to use?
+        -> MySQL or PostgreSQL
+
+-> Client:
+    -> First talks to the master server, gets the cache servers details
+    -> Attempt-1:   NOT REQUIRED
+        -> Create n threads, n = Number of cache servers
+        -> Each thread would send a request to the corresponding cache server
+            -> Maintain an array of conditional varaibles
+                -> Each cond var corresponds to one cache server
+                    -> Generate random requests, based on the key, signal the corresponding cond var
+            -> Low Priority, medium complexity
+    -> Attempt-2:
+        -> Each client sends only one request at a time
+            -> Ideal for the closed loop load testing
+                -> High Piority, low complexity
