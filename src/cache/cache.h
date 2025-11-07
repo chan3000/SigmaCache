@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <shared_mutex>
 
 #include "cpp-httplib/httplib.h"
 #include <mysql_driver.h>
@@ -16,100 +17,134 @@ using namespace std;
 
 class Cache {
     private:
-        static const size_t CACHE_SIZE = 200;
-        unordered_map<int, int> cache_lines;
-        Database_Connector* database;
+        static const size_t CACHE_SIZE = 256;
+        static const size_t NUM_SHARDS = 16;
+        static const size_t SHARD_SIZE = 2;
         
-        /* Doubly Linked List to implement LRU Cache Replacement policy */
-        typedef struct key_node {
-            int key;
-            struct key_node *previous;
-            struct key_node *next;
-        } key_node;
+        struct Shard {
+            unordered_map<int, int> cache_lines;
+            shared_mutex shard_lock;
 
-        key_node *head, *tail;
-        map<int, key_node *> access_list;
-
-        mutex cache_lock, access_list_lock;
-
-        void remove_from_access_list(int key) {
-            std::lock_guard<std::mutex> lock(access_list_lock);
-            if(access_list.find(key) == access_list.end()) return;
-            key_node *current = access_list[key];
-            key_node *previous = current->previous;
-            key_node* next = current->next;
-            access_list.erase(key);
-
-            if(previous != NULL) previous->next = next;
-            if(next != NULL) next->previous = previous;
-
-            current->previous = NULL;
-            current->next = NULL;
+            queue<pair<int, int>> *write_back_queue;
+            condition_variable *cv_write_back;
+            mutex *write_back_lock;
             
-            free(current);
-            current = NULL;
-        }
+            /* Doubly Linked List to implement LRU Cache Replacement policy */
+            typedef struct key_node {
+                int key;
+                struct key_node *previous;
+                struct key_node *next;
+            } key_node;
 
-        void evict_from_cache(int key, bool access_list) {
-            /* Remove key from access list */
-            if(access_list) remove_from_access_list(key);
-            if(cache_lines.find(key) == cache_lines.end()) return;
-            
-            /* Update the cache value to database */
-            std::lock_guard<std::mutex> lock(cache_lock);
-            database->run_query(key, cache_lines[key], request_t::PUT);
-            cache_lines.erase(key);
-        }
+            key_node *head, *tail;
+            map<int, key_node *> access_list;
 
-        void lru() {
-            /* The key at the tail of the access list is the least recently used key */
-            int key = tail->key;
-            evict_from_cache(key, 1);
-        }
+            void remove_from_access_list(int key) {
+                if(access_list.find(key) == access_list.end()) return;
+                key_node *current = access_list[key];
+                key_node *previous = current->previous;
+                key_node* next = current->next;
+                access_list.erase(key);
 
-        /* Keep the recently accessed key at the top of the access list */
-        void move_to_top(int key) {
-            if(access_list.find(key) == access_list.end()) {
-                key_node *new_key = (key_node *)malloc(sizeof(key_node));
-                new_key->key = key;
-                new_key->previous = NULL;
-                new_key->next = NULL;
-                access_list[key] = new_key;
+                if(previous != NULL) previous->next = next;
+                if(next != NULL) next->previous = previous;
 
-                /* Add the new node to the tail of the doubly linked list */
-                if(tail == NULL) {  /* Indicates no element in the doubly linked list */
-                    tail = new_key;
-                    head = new_key;
-                } else {
-                    tail->next = new_key;
-                    new_key->previous = tail;
-                    tail = new_key;
-                }
+                current->previous = NULL;
+                current->next = NULL;
+                
+                delete current;
+                current = NULL;
             }
 
-            key_node *current = access_list[key];
-            key_node *previous = current->previous;
-            key_node *next = current->next;
+            void evict_from_shard(int key, bool access_list) {
+                /* Remove key from access list */
+                if(access_list) remove_from_access_list(key);
+                if(cache_lines.find(key) == cache_lines.end()) return;
+                
+                /* Update the cache value to database */
+                std::lock_guard<std::mutex> lk(*write_back_lock);
+                (*write_back_queue).push(make_pair(key, cache_lines[key]));
+                (*cv_write_back).notify_one();
+                //database->run_query(key, cache_lines[key], request_t::PUT);
+                cache_lines.erase(key);
+            }
 
-            if(previous == NULL) return; /* Already at the top */
+            void lru() {
+                /* The key at the tail of the access list is the least recently used key */
+                int key = tail->key;
+                evict_from_shard(key, 1);
+            }
 
-            previous->next = next;
-            /* Update the current node as head */
-            current->next = head;
-            current->previous = NULL;
-            head->previous = current;
-            head = current;
+            /* Keep the recently accessed key at the top of the access list */
+            void move_to_top(int key) {
+                if(access_list.find(key) == access_list.end()) {
+                    // key_node *new_key = (key_node *)malloc(sizeof(key_node));
+                    key_node *new_key = new key_node;
+                    new_key->key = key;
+                    new_key->previous = NULL;
+                    new_key->next = NULL;
+                    access_list[key] = new_key;
+
+                    /* Add the new node to the tail of the doubly linked list */
+                    if(tail == NULL) {  /* Indicates no element in the doubly linked list */
+                        tail = new_key;
+                        head = new_key;
+                    } else {
+                        tail->next = new_key;
+                        new_key->previous = tail;
+                        tail = new_key;
+                    }
+                }
+
+                key_node *current = access_list[key];
+                key_node *previous = current->previous;
+                key_node *next = current->next;
+
+                if(previous == NULL) return; /* Already at the top */
+
+                previous->next = next;
+                /* Update the current node as head */
+                current->next = head;
+                current->previous = NULL;
+                head->previous = current;
+                head = current;
+            }
+
+            void add_to_shard(int key, int value) {
+                /* Replace LRU Cache, if cache is full */
+                if(cache_lines.find(key) == cache_lines.end() && 
+                    cache_lines.size() == SHARD_SIZE) lru();
+                
+                /* Add to cache */
+                cache_lines[key] = value;
+
+                /* Move key to top of access list */
+                move_to_top(key);
+            }
+        };
+
+        Shard cache_shards[NUM_SHARDS];
+        queue<pair<int, int>> write_back_queue;
+        condition_variable cv_write_back;
+        mutex write_back_lock;
+        thread write_back_thread;
+        Database_Connector* database;
+
+        int get_shard_mapping(int key) {
+            return (key%NUM_SHARDS);
         }
 
-        void add_to_cache(int key, int value) {
-            /* Replace LRU Cache, if cache is full */
-            if(cache_lines.size() == CACHE_SIZE) lru();
-            
-            /* Add to cache */
-            cache_lines[key] = value;
+        void delayed_write_to_database() {
+            while(1) {
+                std::unique_lock<std::mutex> lk(write_back_lock);
+                cv_write_back.wait(lk, [&]{ return !write_back_queue.empty(); });
 
-            /* Move key to top of access list */
-            move_to_top(key);
+                while(!write_back_queue.empty()) {
+                    auto kv = write_back_queue.front();
+                    write_back_queue.pop();
+                    database->run_query(kv.first, kv.second, request_t::PUT);
+                }
+            }
         }
 
         void start_server(string ip_address, int port_no) {
@@ -117,18 +152,29 @@ class Cache {
 
             svr.Get("/kv_cache/:key", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
+                int shard_index = get_shard_mapping(key);
+                auto& current_shard = cache_shards[shard_index];
+                auto& cache_lines =  current_shard.cache_lines;
+
+                cout << "Received GET Request for key = " << key << endl;
+
+                unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+                
                 if(cache_lines.find(key) == cache_lines.end()) {
                     /* Fetch from database and populate the cache */
                     database->run_query(key, -1, request_t::GET);
                     int value = database->current_value;
-
-                    add_to_cache(key, value);
+                    cout << "Value retreived from database = " << value << endl;
+                    cout.flush();
+                    current_shard.add_to_shard(key, value);
                     res.set_content(to_string(value), "text/plain");
                 }
                 else {
                     int value = cache_lines[key];
+                    cout << "Value retreived from cache = " << value << endl;
+                    cout.flush();
                     /* Move current key to top of access list after access */
-                    move_to_top(key);
+                    current_shard.move_to_top(key);
                     res.set_content(to_string(value), "text/plain");
                 }
             });
@@ -136,39 +182,66 @@ class Cache {
             svr.Post("/kv_cache/:key/:value", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
                 int value = stoi(req.path_params.at("value"));
-                if(cache_lines.find(key) == cache_lines.end()) {
-                    add_to_cache(key, value);
-                }
-                cache_lines[key] = value;
+                int shard_index = get_shard_mapping(key);
+                auto& current_shard = cache_shards[shard_index];
+                
+                unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+
+                current_shard.add_to_shard(key, value);
             });
             
             svr.Put("/kv_cache/:key/:value", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
                 int value = stoi(req.path_params.at("value"));
-                if(cache_lines.find(key) == cache_lines.end()) {
-                    add_to_cache(key, value);
-                }
-                cache_lines[key] = value;
+                int shard_index = get_shard_mapping(key);
+                auto& current_shard = cache_shards[shard_index];
+
+                unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+
+                current_shard.add_to_shard(key, value);
             });
             
-            svr.Delete("/kv_cache/:key", [](const httplib::Request& req, httplib::Response& res) {
+            svr.Delete("/kv_cache/:key", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
+                int shard_index = get_shard_mapping(key);
+                auto& current_shard = cache_shards[shard_index];
+
+                unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+
                 /* Remove the key from cache, access list, database */
-                evict_from_cache(key, 1);
+                current_shard.evict_from_shard(key, 1);
                 database->run_query(key, -1, request_t::DELETE);
             });
+            std::cout << "Cache starting on http://" + ip_address + "/" + to_string(port_no) << std::endl;
+            svr.listen(ip_address, port_no);
         }
+
     public:
         Cache() {};
-        Cache(string ip_address, int port_no, string host, string user, string password, string table_name) {
-            cache_lines.clear();
-            head = NULL;
-            tail = NULL;
-            connect_to_database(host, user, password, table_name);
+        Cache(string ip_address, int port_no, string host, string user, string password, string database_name, string table_name) {
+            connect_to_database(host, user, password, database_name, table_name);
+            /* Initialize the shards */
+            for(size_t i = 0; i < NUM_SHARDS; ++i) {
+                cache_shards[i].head = NULL;
+                cache_shards[i].tail = NULL;
+                cache_shards[i].write_back_queue = &write_back_queue;
+                cache_shards[i].cv_write_back = &cv_write_back;
+                cache_shards[i].write_back_lock = &write_back_lock;
+            }
+            write_back_queue = {};
+            write_back_thread = thread(&Cache::delayed_write_to_database, this);
             start_server(ip_address, port_no);
         }
 
-        void connect_to_database(string host, string user, string password, string table_name) {
-            this->database = new Database_Connector(host, user, password, table_name);
+        void connect_to_database(string host, string user, string password, string database_name, string table_name) {
+            this->database = new Database_Connector(host, user, password, database_name, table_name);
         };
+
+        // ~Cache() {
+        //     while(!write_back_queue.empty()) {
+        //         auto kv = write_back_queue.front();
+        //         write_back_queue.pop();
+        //         database->run_query(kv.first, kv.second, request_t::PUT);
+        //     }
+        // }
 };

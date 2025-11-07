@@ -27,27 +27,26 @@ class Database_Connector{
             string query = "";
             switch(request_type) {
                 case request_t::GET: {
-                    query = "SELECT key, value FROM " + table_name + " WHERE key = " + to_string(key);
+                    query = "SELECT `key`, `value_data` FROM " + table_name + " WHERE `key` = " + to_string(key) + ";";
                     sql::ResultSet *res = stmt->executeQuery(query);
                     while(res->next()) {
                         current_key = res->getInt("key");
-                        current_value = res->getInt("value");
-                        cout << current_key << " " << current_value << endl;
+                        current_value = res->getInt("value_data");
                     }
                     delete res;
                     break;
                 }
                 case request_t::POST:
-                    {query = "UPDATE " + table_name + " SET value = " + to_string(value) + "WHERE key = " + to_string(key);
+                    {query = "UPDATE " + table_name + " SET `value_data` = " + to_string(value) + " WHERE `key` = " + to_string(key);
                     stmt->executeUpdate(query);
                     break;}
                 case request_t::PUT:
-                    {query = "INSERT INTO " + table_name + " (key, value) VALUES (" + to_string(key) + ", " + to_string(value) + ")"
-                    " ON DUPLICATE KEY UPDATE value = " + to_string(value);
+                    {query = "INSERT INTO " + table_name + " (`key`, `value_data`) VALUES (" + to_string(key) + ", " + to_string(value) + ")"
+                    " ON DUPLICATE KEY UPDATE `value_data` = " + to_string(value);
                     stmt->executeUpdate(query);
                     break;}
                 case request_t::DELETE:
-                    {query = "DELETE FROM " + table_name + " WHERE key = " + to_string(key);
+                    {query = "DELETE FROM " + table_name + " WHERE `key` = " + to_string(key);
                     stmt->executeUpdate(query);
                     break;}
                 default:

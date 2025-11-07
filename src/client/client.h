@@ -12,7 +12,7 @@ class Client {
         cache_metadata * cache_servers;
 
         int get_cache_server(int key) {
-            for(int i = 0; i < num_servers; ++i) {
+            for(size_t i = 0; i < num_servers; ++i) {
                 if(key >= cache_servers[i].start_key && key <= cache_servers[i].end_key) return i;
             }
             cout << "Server not found for given key!!\n";
@@ -32,25 +32,36 @@ class Client {
             auto res = cli.Get("/initiate");
             if(res && res->status == 200) {
                 num_servers = res->body.size() / sizeof(cache_metadata);
-                cache_servers = reinterpret_cast<cache_metadata*>(res->body.data());
+                cache_servers = (cache_metadata *)malloc(num_servers * sizeof(cache_metadata));
+                cache_metadata *temp = reinterpret_cast<cache_metadata*>(res->body.data());
+                memcpy(cache_servers, temp, num_servers * sizeof(*temp));
+            }
+
+            for (size_t i = 0; i < num_servers; ++i) {
+                cout << "  - " << cache_servers[i].ip_address << ":" << cache_servers[i].port
+                    << " (range: " << cache_servers[i].start_key 
+                    << "-" << cache_servers[i].end_key << ")" << endl;
             }
         }
         
-        void send_request(request_t request_type, int key, int value/* For POST and PUT */) {
+        void send_request(request_t::request_t request_type, int key, int value/* For POST and PUT */) {
             int server_index = get_cache_server(key);
-            const auto& server = cache_servers[server_index];
-            httplib::Client cli(server.ip_address, server.port_no);
+            cout << "Connected to cache: " << cache_servers[server_index].ip_address << ", " << cache_servers[server_index].port << endl;
+            httplib::Client cli(cache_servers[server_index].ip_address, cache_servers[server_index].port); 
             switch(request_type)
             {
-                case GET:
-                    /* code */
+                case request_t::GET: {
+                    cout << "[Client] Sending GET Request\n";
+                    auto res = cli.Get("/kv_cache/" + to_string(key));
+                    cout << res->body << endl;
                     break;
-                case POST:
-                    break;
-                case PUT:
-                    break;
-                case DELETE:
-                    break;
+                }
+                case request_t::POST:
+                    {break;}
+                case request_t::PUT:
+                    {break;}
+                case request_t::DELETE:
+                    {break;}
                 default:
                     cout << "Send a valid request!\n";
                     cout.flush();

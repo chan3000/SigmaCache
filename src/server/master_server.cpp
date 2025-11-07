@@ -20,7 +20,7 @@ int main() {
 	all_cache_servers[1].start_key = 101;
 	all_cache_servers[1].end_key = 200;
 
-	/* Client requests the cache server detauls at this end-point */
+	/* Client requests the cache server details at this end-point */
 	svr.Get("/initiate", [&](const httplib::Request& req, httplib::Response& res) {
 		string binary_data(reinterpret_cast<const char*>(all_cache_servers), num_cache_servers * sizeof(cache_metadata));
 		res.set_content(binary_data, "application/octet-stream");

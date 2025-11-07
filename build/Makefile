@@ -3,7 +3,7 @@
 
 # Compiler settings
 CXX = g++
-CFLAGS = -std=c++11 -Wall -O2
+CFLAGS = -std=c++17 -Wall -O2
 LIBS = -lmysqlcppconn
 
 # Directories
