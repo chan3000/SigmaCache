@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
+
 #include "cpp-httplib/httplib.h"
-#include "cache_metadata.h"
-#include "request_t.h"
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 #include <cppconn/statement.h>
@@ -9,17 +8,20 @@
 #include <cppconn/resultset.h>
 #include <cppconn/exception.h>
 
-using namespace std;
+#include "cache_metadata.h"
+#include "request_t.h"
+#include "db_connector.h"
 
-#define PLACEHOLDER 0
+using namespace std;
 
 class Cache {
     private:
-        static size_t CACHE_SIZE = 200;
+        static const size_t CACHE_SIZE = 200;
         unordered_map<int, int> cache_lines;
+        Database_Connector* database;
         
         /* Doubly Linked List to implement LRU Cache Replacement policy */
-        typedef struct {
+        typedef struct key_node {
             int key;
             struct key_node *previous;
             struct key_node *next;
@@ -28,14 +30,10 @@ class Cache {
         key_node *head, *tail;
         map<int, key_node *> access_list;
 
-        int fetch_from_db(int key) {
-            /* Fetch value from database */
-            int value = PLACEHOLDER;
-
-            return value;
-        }
+        mutex cache_lock, access_list_lock;
 
         void remove_from_access_list(int key) {
+            std::lock_guard<std::mutex> lock(access_list_lock);
             if(access_list.find(key) == access_list.end()) return;
             key_node *current = access_list[key];
             key_node *previous = current->previous;
@@ -53,16 +51,20 @@ class Cache {
         }
 
         void evict_from_cache(int key, bool access_list) {
-            if(cache_lines.find(key) == cache_lines.end()) return;
-            cache_lines.erase(key);
+            /* Remove key from access list */
             if(access_list) remove_from_access_list(key);
+            if(cache_lines.find(key) == cache_lines.end()) return;
+            
+            /* Update the cache value to database */
+            std::lock_guard<std::mutex> lock(cache_lock);
+            database->run_query(key, cache_lines[key], request_t::PUT);
+            cache_lines.erase(key);
         }
 
         void lru() {
             /* The key at the tail of the access list is the least recently used key */
             int key = tail->key;
-            remove_from_access_list(key);
-            evict_from_cache(key, 0);
+            evict_from_cache(key, 1);
         }
 
         /* Keep the recently accessed key at the top of the access list */
@@ -100,6 +102,7 @@ class Cache {
         }
 
         void add_to_cache(int key, int value) {
+            /* Replace LRU Cache, if cache is full */
             if(cache_lines.size() == CACHE_SIZE) lru();
             
             /* Add to cache */
@@ -112,14 +115,15 @@ class Cache {
         void start_server(string ip_address, int port_no) {
             httplib::Server svr;
 
-            svr.Get("/kv_cache/:key", [](const httplib::Request& req, httplib::Response& res) {
+            svr.Get("/kv_cache/:key", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
                 if(cache_lines.find(key) == cache_lines.end()) {
-                    // res.set_content("-1", "text/plain")
                     /* Fetch from database and populate the cache */
-                    int value = PLACEHOLDER;
+                    database->run_query(key, -1, request_t::GET);
+                    int value = database->current_value;
 
                     add_to_cache(key, value);
+                    res.set_content(to_string(value), "text/plain");
                 }
                 else {
                     int value = cache_lines[key];
@@ -129,32 +133,42 @@ class Cache {
                 }
             });
 
-            svr.Post("/kv_cache/:key/:value", [](const httplib::Request& req, httplib::Response& res) {
+            svr.Post("/kv_cache/:key/:value", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
                 int value = stoi(req.path_params.at("value"));
-
+                if(cache_lines.find(key) == cache_lines.end()) {
+                    add_to_cache(key, value);
+                }
                 cache_lines[key] = value;
             });
             
-            svr.Put("/kv_cache/:key/:value", [](const httplib::Request& req, httplib::Response& res) {
+            svr.Put("/kv_cache/:key/:value", [&](const httplib::Request& req, httplib::Response& res) {
                 int key = stoi(req.path_params.at("key"));
                 int value = stoi(req.path_params.at("value"));
-
+                if(cache_lines.find(key) == cache_lines.end()) {
+                    add_to_cache(key, value);
+                }
                 cache_lines[key] = value;
             });
             
-            svr.Delete();
-        }
-
-        void handle_request() {
-
+            svr.Delete("/kv_cache/:key", [](const httplib::Request& req, httplib::Response& res) {
+                int key = stoi(req.path_params.at("key"));
+                /* Remove the key from cache, access list, database */
+                evict_from_cache(key, 1);
+                database->run_query(key, -1, request_t::DELETE);
+            });
         }
     public:
-        Cache();
-        Cache(string ip_address, int port_no) {
+        Cache() {};
+        Cache(string ip_address, int port_no, string host, string user, string password, string table_name) {
             cache_lines.clear();
             head = NULL;
             tail = NULL;
+            connect_to_database(host, user, password, table_name);
             start_server(ip_address, port_no);
         }
+
+        void connect_to_database(string host, string user, string password, string table_name) {
+            this->database = new Database_Connector(host, user, password, table_name);
+        };
 };

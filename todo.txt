@@ -28,7 +28,7 @@
     
     -> Inline Cache
         -> Write back policy
-            -> Cache line evicted when cache full
+            -> Writes back to database when Cache line evicted 
         -> Size of the cache?
             -> Try out some values, some fraction of the key range
 
@@ -46,7 +46,7 @@
                 -> Check out for implementation bugs - race condition, deadlock bugs
 
     -> Which database to use?
-        -> MySQL or PostgreSQL
+        -> MySQL
 
 -> Client:
     -> First talks to the master server, gets the cache servers details
