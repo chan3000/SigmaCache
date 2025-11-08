@@ -37,31 +37,40 @@ class Client {
                 memcpy(cache_servers, temp, num_servers * sizeof(*temp));
             }
 
-            for (size_t i = 0; i < num_servers; ++i) {
-                cout << "  - " << cache_servers[i].ip_address << ":" << cache_servers[i].port
-                    << " (range: " << cache_servers[i].start_key 
-                    << "-" << cache_servers[i].end_key << ")" << endl;
-            }
+            // for (size_t i = 0; i < num_servers; ++i) {
+            //     cout << "  - " << cache_servers[i].ip_address << ":" << cache_servers[i].port
+            //         << " (range: " << cache_servers[i].start_key 
+            //         << "-" << cache_servers[i].end_key << ")" << endl;
+            // }
         }
         
         void send_request(request_t::request_t request_type, int key, int value/* For POST and PUT */) {
             int server_index = get_cache_server(key);
-            cout << "Connected to cache: " << cache_servers[server_index].ip_address << ", " << cache_servers[server_index].port << endl;
+            cout << "[Client] Connected to cache: " << cache_servers[server_index].ip_address << ", " << cache_servers[server_index].port << endl;
             httplib::Client cli(cache_servers[server_index].ip_address, cache_servers[server_index].port); 
             switch(request_type)
             {
-                case request_t::GET: {
+                case request_t::GET:{
                     cout << "[Client] Sending GET Request\n";
                     auto res = cli.Get("/kv_cache/" + to_string(key));
                     cout << res->body << endl;
                     break;
                 }
-                case request_t::POST:
-                    {break;}
-                case request_t::PUT:
-                    {break;}
-                case request_t::DELETE:
-                    {break;}
+                case request_t::POST:{
+                    cout << "[Client] Sending POST Request\n";
+                    auto res = cli.Post("/kv_cache/" + to_string(key) + "/" + to_string(value));
+                    break;
+                }
+                case request_t::PUT:{ 
+                    cout << "[Client] Sending PUT Request\n";
+                    auto res = cli.Post("/kv_cache/" + to_string(key) + "/" + to_string(value));
+                    break;
+                }
+                case request_t::DELETE:{ 
+                    cout << "[Client] Sending DELETE Request\n";
+                    auto res = cli.Post("/kv_cache/" + to_string(key));
+                    break;
+                }
                 default:
                     cout << "Send a valid request!\n";
                     cout.flush();

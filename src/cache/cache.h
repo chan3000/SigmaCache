@@ -18,7 +18,7 @@ using namespace std;
 class Cache {
     private:
         static const size_t CACHE_SIZE = 256;
-        static const size_t NUM_SHARDS = 16;
+        static const size_t NUM_SHARDS = 3;
         static const size_t SHARD_SIZE = 2;
         
         struct Shard {
@@ -51,6 +51,9 @@ class Cache {
 
                 current->previous = NULL;
                 current->next = NULL;
+
+                if(tail == current) tail = NULL;
+                if(head == current) head = NULL;
                 
                 delete current;
                 current = NULL;
@@ -58,6 +61,7 @@ class Cache {
 
             void evict_from_shard(int key, bool access_list) {
                 /* Remove key from access list */
+                cout << "Evicting from shard, key = " << key << endl;
                 if(access_list) remove_from_access_list(key);
                 if(cache_lines.find(key) == cache_lines.end()) return;
                 
@@ -72,6 +76,17 @@ class Cache {
             void lru() {
                 /* The key at the tail of the access list is the least recently used key */
                 int key = tail->key;
+                cout << "Replacing key = " << key << endl;
+                cout << "Key Access Sequence = ";
+                auto temp = head;
+                int count = 0;
+                while(temp != NULL) {
+                    cout << temp->key << " ";
+                    temp = temp->next;
+                    ++count;
+                    if(count == 10) break;
+                }
+                cout << endl;
                 evict_from_shard(key, 1);
             }
 
@@ -89,6 +104,7 @@ class Cache {
                     if(tail == NULL) {  /* Indicates no element in the doubly linked list */
                         tail = new_key;
                         head = new_key;
+                        cout << "New head key = " << head->key << endl;
                     } else {
                         tail->next = new_key;
                         new_key->previous = tail;
@@ -103,6 +119,9 @@ class Cache {
                 if(previous == NULL) return; /* Already at the top */
 
                 previous->next = next;
+                if(next != NULL) next->previous = previous;
+                if(current == tail) tail = previous; 
+                
                 /* Update the current node as head */
                 current->next = head;
                 current->previous = NULL;
@@ -112,8 +131,12 @@ class Cache {
 
             void add_to_shard(int key, int value) {
                 /* Replace LRU Cache, if cache is full */
+                cout << "Current shard size = " << cache_lines.size() << endl;
+                cout << "Adding key = " << key << " to shard\n"; 
                 if(cache_lines.find(key) == cache_lines.end() && 
-                    cache_lines.size() == SHARD_SIZE) lru();
+                    cache_lines.size() == SHARD_SIZE) {
+                    lru();
+                }
                 
                 /* Add to cache */
                 cache_lines[key] = value;
@@ -142,6 +165,7 @@ class Cache {
                 while(!write_back_queue.empty()) {
                     auto kv = write_back_queue.front();
                     write_back_queue.pop();
+                    cout << "Writing to databse key = " << kv.first << " value = " << kv.second << endl; 
                     database->run_query(kv.first, kv.second, request_t::PUT);
                 }
             }
@@ -156,12 +180,12 @@ class Cache {
                 auto& current_shard = cache_shards[shard_index];
                 auto& cache_lines =  current_shard.cache_lines;
 
-                cout << "Received GET Request for key = " << key << endl;
-
                 unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+                cout << "Received GET Request for key = " << key << endl;
                 
                 if(cache_lines.find(key) == cache_lines.end()) {
                     /* Fetch from database and populate the cache */
+                    cout << "Querying database for key = " << key << endl;
                     database->run_query(key, -1, request_t::GET);
                     int value = database->current_value;
                     cout << "Value retreived from database = " << value << endl;
@@ -186,6 +210,7 @@ class Cache {
                 auto& current_shard = cache_shards[shard_index];
                 
                 unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+                cout << "Received POST Request for key = " << key << endl;
 
                 current_shard.add_to_shard(key, value);
             });
@@ -197,6 +222,7 @@ class Cache {
                 auto& current_shard = cache_shards[shard_index];
 
                 unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
+                cout << "Received PUT Request for key = " << key << endl;
 
                 current_shard.add_to_shard(key, value);
             });
