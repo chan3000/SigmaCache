@@ -49,11 +49,11 @@ class Cache {
                 if(previous != NULL) previous->next = next;
                 if(next != NULL) next->previous = previous;
 
+                if(tail == current) tail = current->previous;
+                if(head == current) head = current->next;
+
                 current->previous = NULL;
                 current->next = NULL;
-
-                if(tail == current) tail = NULL;
-                if(head == current) head = NULL;
                 
                 delete current;
                 current = NULL;
@@ -120,7 +120,7 @@ class Cache {
 
                 previous->next = next;
                 if(next != NULL) next->previous = previous;
-                if(current == tail) tail = previous; 
+                if(current->next == NULL) tail = previous; 
                 
                 /* Update the current node as head */
                 current->next = head;
@@ -151,7 +151,8 @@ class Cache {
         condition_variable cv_write_back;
         mutex write_back_lock;
         thread write_back_thread;
-        Database_Connector* database;
+        // Database_Connector* database;
+        string host, user, password, database_name, table_name;
 
         int get_shard_mapping(int key) {
             return (key%NUM_SHARDS);
@@ -161,13 +162,14 @@ class Cache {
             while(1) {
                 std::unique_lock<std::mutex> lk(write_back_lock);
                 cv_write_back.wait(lk, [&]{ return !write_back_queue.empty(); });
-
+                Database_Connector* database = new Database_Connector(host, user, password, database_name, table_name);
                 while(!write_back_queue.empty()) {
                     auto kv = write_back_queue.front();
                     write_back_queue.pop();
-                    cout << "Writing to databse key = " << kv.first << " value = " << kv.second << endl; 
-                    database->run_query(kv.first, kv.second, request_t::PUT);
+                    cout << "Writing to database key = " << kv.first << " value = " << kv.second << endl; 
+                    database->run_query(kv.first, kv.second, request_t::POST);
                 }
+                delete database;
             }
         }
 
@@ -186,8 +188,10 @@ class Cache {
                 if(cache_lines.find(key) == cache_lines.end()) {
                     /* Fetch from database and populate the cache */
                     cout << "Querying database for key = " << key << endl;
+                    Database_Connector* database = new Database_Connector(host, user, password, database_name, table_name);
                     database->run_query(key, -1, request_t::GET);
                     int value = database->current_value;
+                    delete database;
                     cout << "Value retreived from database = " << value << endl;
                     cout.flush();
                     current_shard.add_to_shard(key, value);
@@ -236,16 +240,28 @@ class Cache {
 
                 /* Remove the key from cache, access list, database */
                 current_shard.evict_from_shard(key, 1);
+                Database_Connector* database = new Database_Connector(host, user, password, database_name, table_name);
                 database->run_query(key, -1, request_t::DELETE);
+                delete database;
             });
             std::cout << "Cache starting on http://" + ip_address + "/" + to_string(port_no) << std::endl;
             svr.listen(ip_address, port_no);
         }
 
+        // void connect_to_database(string host, string user, string password, string database_name, string table_name) {
+        //     this->database = new Database_Connector(host, user, password, database_name, table_name);
+        // };
+
     public:
         Cache() {};
         Cache(string ip_address, int port_no, string host, string user, string password, string database_name, string table_name) {
-            connect_to_database(host, user, password, database_name, table_name);
+            // connect_to_database(host, user, password, database_name, table_name);
+            this->host = host;
+            this->user = user;
+            this->password = password;
+            this->database_name = database_name;
+            this->table_name = table_name;
+
             /* Initialize the shards */
             for(size_t i = 0; i < NUM_SHARDS; ++i) {
                 cache_shards[i].head = NULL;
@@ -259,9 +275,9 @@ class Cache {
             start_server(ip_address, port_no);
         }
 
-        void connect_to_database(string host, string user, string password, string database_name, string table_name) {
-            this->database = new Database_Connector(host, user, password, database_name, table_name);
-        };
+        // void connect_to_database(string host, string user, string password, string database_name, string table_name) {
+        //     this->database = new Database_Connector(host, user, password, database_name, table_name);
+        // };
 
         // ~Cache() {
         //     while(!write_back_queue.empty()) {

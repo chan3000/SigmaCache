@@ -4,6 +4,7 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/resultset.h>
 #include <cppconn/exception.h>
+#include <thread>
 #include "request_t.h"
 
 using namespace std;
@@ -12,24 +13,81 @@ class Database_Connector{
     private:
         sql::mysql::MySQL_Driver *driver;
         sql::Connection *con;
+        // thread_local static sql::Connection* thread_connection;
         string host, user, password;
         string table_name;
         string database_name;
 
-        bool is_connected() {
-            if (!con) return false;
+        thread periodic_ping;
+
+    //     sql::Connection* get_thread_connection() {
+    //     // First time this thread calls this function?
+    //     if (thread_connection == nullptr) {
+    //         cout << "[Thread " << this_thread::get_id() 
+    //              << "] Creating new connection" << endl;
             
-            try {
-                /* Check if connection closed */
-                if (con->isClosed()) return false;
-                return true;
+    //         thread_connection = driver->connect(host, user, password);
+    //         thread_connection->setSchema(database_name);
+            
+    //         // sql::Statement *stmt = thread_connection->createStatement();
+    //         // stmt->execute("SET SESSION wait_timeout = 86400");
+    //         // delete stmt;
+    //     }
+        
+    //     // Test if connection is alive
+    //     try {
+    //         if (thread_connection->isClosed()) {
+    //             cout << "[Thread " << this_thread::get_id() 
+    //                  << "] Reconnecting..." << endl;
                 
-            } catch (sql::SQLException &e) {
-                return false;
-            } catch (...) {
-                return false;
-            }
+    //             delete thread_connection;
+    //             thread_connection = driver->connect(host, user, password);
+    //             thread_connection->setSchema(database_name);
+    //         }
+    //     } catch (...) {
+    //         cout << "[Thread " << this_thread::get_id() 
+    //              << "] Connection lost, reconnecting..." << endl;
+            
+    //         delete thread_connection;
+    //         thread_connection = driver->connect(host, user, password);
+    //         thread_connection->setSchema(database_name);
+    //     }
+        
+    //     return thread_connection;
+    // }
+
+
+        void ping_database() {
+            // while(true) {
+            //     /* Sleep for n milliseconds */
+            //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            //     // cout << "Cool1 \n";
+            //     // cout.flush();
+            //     sql::Statement *stmt = con->createStatement();
+            //     string query = "UPDATE " + table_name + " SET `value_data` = 0 WHERE `key` = 0;";
+            //     stmt->executeUpdate(query);
+            //     // cout << "Cool2 \n";
+            //     // cout.flush();
+            //     delete stmt; 
+            //     stmt = NULL;
+            // }
         }
+
+        // bool is_connected() {
+        //     if(!con) return false;
+            
+        //     try {
+        //         /* Check if connection closed */
+        //         if (con->isClosed()) return false;
+        //         return true;
+                
+        //     } catch(sql::SQLException &e) {
+        //         return false;
+        //     } catch(...) {
+        //         return false;
+        //     }
+        // }
 
 
         // void establish_connection() {
@@ -50,27 +108,27 @@ class Database_Connector{
         //     }
         // }
 
-        void establish_connection() {
-            // Check if already connected
-            if(is_connected()) return;
+        // void establish_connection() {
+        //     // Check if already connected
+        //     if(is_connected()) return;
             
-            if(con) {
-                delete con;
-                con = nullptr;
-            }
+        //     if(con) {
+        //         delete con;
+        //         con = nullptr;
+        //     }
             
-            try {
-                cout << "Establishing database connection..." << endl;
-                con = driver->connect(host, user, password);
-                con->setSchema(database_name);
-                cout << "Database connected successfully" << endl;
+        //     try {
+        //         cout << "Establishing database connection..." << endl;
+        //         con = driver->connect(host, user, password);
+        //         con->setSchema(database_name);
+        //         cout << "Database connected successfully" << endl;
                 
-            } catch (sql::SQLException &e) {
-                cerr << "Connection failed: " << e.what() << endl;
-                con = nullptr;
-                throw;
-            }
-        }
+        //     } catch (sql::SQLException &e) {
+        //         cerr << "Connection failed: " << e.what() << endl;
+        //         con = nullptr;
+        //         throw;
+        //     }
+        // }
 
     public:
         Database_Connector() {};
@@ -79,22 +137,25 @@ class Database_Connector{
             con = driver->connect(host, user, password);
             con->setSchema(database_name);
 
-            sql::ConnectOptionsMap connection_properties;
-            connection_properties["OPT_RECONNECT"] = true;
-            // Set client-side timeouts
-            connection_properties["OPT_CONNECT_TIMEOUT"] = 30;        // 30 seconds
-            connection_properties["OPT_READ_TIMEOUT"] = 60;           // 60 seconds  
-            connection_properties["OPT_WRITE_TIMEOUT"] = 60;          // 60 seconds
+            // sql::ConnectOptionsMap connection_properties;
+            // connection_properties["OPT_RECONNECT"] = true;
+            // // Set client-side timeouts
+            // connection_properties["OPT_CONNECT_TIMEOUT"] = 30;        // 30 seconds
+            // connection_properties["OPT_READ_TIMEOUT"] = 60;           // 60 seconds  
+            // connection_properties["OPT_WRITE_TIMEOUT"] = 60;          // 60 seconds
         
             this->host = host;
             this->user = user;
             this->password = password;
             this->database_name = database_name;
             this->table_name = table_name;
+
+            //periodic_ping = thread(&Database_Connector::ping_database, this);
         }
 
         void run_query(int key, int value, request_t::request_t request_type) {
-            establish_connection();
+            // establish_connection();
+            // sql::Connection *con = get_thread_connection();
             sql::Statement *stmt = con->createStatement();
             string query = "";
             switch(request_type) {
@@ -109,12 +170,12 @@ class Database_Connector{
                     res = NULL;
                     break;
                 }
-                case request_t::POST: {
+                case request_t::PUT: {
                     query = "UPDATE " + table_name + " SET `value_data` = " + to_string(value) + " WHERE `key` = " + to_string(key) + ";";
                     stmt->executeUpdate(query);
                     break;
                 }
-                case request_t::PUT: {
+                case request_t::POST: {
                     query = "INSERT INTO " + table_name + " (`key`, `value_data`) VALUES (" + to_string(key) + ", " + to_string(value) + ")"
                     " ON DUPLICATE KEY UPDATE `value_data` = " + to_string(value)+ ";";
                     stmt->executeUpdate(query);
@@ -130,8 +191,11 @@ class Database_Connector{
             }
 
             delete stmt;
+            delete con;
         }
 
         int current_key;
         int current_value;
 };
+
+// thread_local sql::Connection* Database_Connector::thread_connection = nullptr;
