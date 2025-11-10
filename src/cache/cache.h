@@ -120,7 +120,7 @@ class Cache {
 
                 previous->next = next;
                 if(next != NULL) next->previous = previous;
-                if(current->next == NULL) tail = previous; 
+                if(current == tail) tail = previous; 
                 
                 /* Update the current node as head */
                 current->next = head;
@@ -132,9 +132,9 @@ class Cache {
             void add_to_shard(int key, int value) {
                 /* Replace LRU Cache, if cache is full */
                 cout << "Current shard size = " << cache_lines.size() << endl;
-                cout << "Adding key = " << key << " to shard\n"; 
                 if(cache_lines.find(key) == cache_lines.end() && 
                     cache_lines.size() == SHARD_SIZE) {
+                    cout << "Adding key = " << key << " to shard\n"; 
                     lru();
                 }
                 
@@ -239,6 +239,7 @@ class Cache {
                 unique_lock<shared_mutex> write_lock(current_shard.shard_lock);
 
                 /* Remove the key from cache, access list, database */
+                cout << "Received DELETE Request for key = " << key << endl;
                 current_shard.evict_from_shard(key, 1);
                 Database_Connector* database = new Database_Connector(host, user, password, database_name, table_name);
                 database->run_query(key, -1, request_t::DELETE);

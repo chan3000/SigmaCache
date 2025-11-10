@@ -61,3 +61,12 @@
         -> Each client sends only one request at a time
             -> Ideal for the closed loop load testing
                 -> High Piority, low complexity
+
+-> Creating a docker environment for load testing of the cache server
+    -> Created Dockerfile to run the cache_server in the container
+        -> Dockerfile has the environment details to run the server executable
+    -> Current Docker Image: cache_server   v6        20e6b614e392
+    -> Run docker commands in root privilege
+    ->  Command to start the docker container:
+        -> sudo docker run -it --network="host" -p 5051:5051 -p 3036:3036 --name debug_server cache_server:v6 bash
+    -> Once you get access to the docker terminal, build and run the executable as usual

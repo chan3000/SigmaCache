@@ -50,25 +50,25 @@ class Client {
             httplib::Client cli(cache_servers[server_index].ip_address, cache_servers[server_index].port); 
             switch(request_type)
             {
-                case request_t::GET:{
+                case request_t::GET: {
                     cout << "[Client] Sending GET Request\n";
                     auto res = cli.Get("/kv_cache/" + to_string(key));
                     cout << res->body << endl;
                     break;
                 }
-                case request_t::POST:{
+                case request_t::POST: {
                     cout << "[Client] Sending POST Request\n";
                     auto res = cli.Post("/kv_cache/" + to_string(key) + "/" + to_string(value));
                     break;
                 }
-                case request_t::PUT:{ 
+                case request_t::PUT: { 
                     cout << "[Client] Sending PUT Request\n";
                     auto res = cli.Post("/kv_cache/" + to_string(key) + "/" + to_string(value));
                     break;
                 }
-                case request_t::DELETE:{ 
+                case request_t::DELETE: { 
                     cout << "[Client] Sending DELETE Request\n";
-                    auto res = cli.Post("/kv_cache/" + to_string(key));
+                    auto res = cli.Delete("/kv_cache/" + to_string(key));
                     break;
                 }
                 default:

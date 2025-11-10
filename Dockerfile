@@ -1,0 +1,24 @@
+# ----------------------------------------------------
+# 2. RUNTIME STAGE: The final, lightweight deployment image
+# ----------------------------------------------------
+# Use a slim image that contains only the C++ runtime libraries needed
+FROM ubuntu:latest 
+
+RUN apt-get update && apt-get install -y make
+RUN apt-get update && apt-get install -y g++ build-essential
+RUN apt-get update && apt-get install -y libmysqlcppconn-dev
+
+# Set the working directory where the executable will live
+WORKDIR /app
+
+# Copy ONLY the locally compiled executable to the image 
+COPY . /app
+
+ENV PATH="/app/build:${PATH}"
+
+# Expose the port your application listens on (e.g., 8080)
+EXPOSE 5051
+EXPOSE 5052
+
+# Define the command to run your server executable when the container starts
+CMD ["/app/build/cache", "localhost", "5051"]

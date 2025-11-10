@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  loadtest_server:
+    # 1. Image built from your local executable strategy
+    image: cache_server:latest
+    
+    # 2. Port Mapping: Map container port 8080 to host port 8080
+    ports:
+      - "3306:3306"
+      - "33060:33060"
+      - "33061:33061"
+      - "5050:5050"
+      - "5051:5051"
+      - "5052:5052"
+      
+    # 3. Resource Constraints Section (Key for Load Testing)
+    deploy:
+      resources:
+        limits:
+          # Pin the container's processes to use only CPU Core 0 (the first core).
+          # This guarantees that at 100% usage of Core 0, you have a bottleneck.
+          cpuset: "0" 
+          
+          # Apply an additional CPU limit to Core 0 (e.g., 50% of Core 0).
+          # This forces a CPU bottleneck even under moderate load.
+          # You can adjust this value (e.g., "0.50" for 50%, "0.25" for 25%).
+          # cpu: "0.50" 
+          
+          # Add a minimal memory limit to prevent accidental OOM kills by large background processes
+          # memory: "1024Mi" # 1 GiB (adjust based on your server's needs)
+
+# Note on "cpuset" and "cpu" usage:
+# - 'cpuset: "0"' means the container can ONLY run on core 0.
+# - 'cpu: "0.50"' means the container can only use 50% of the single core (Core 0) 
+#   it has been assigned to. This is the precise bottleneck you test against.
+
+# docker run -d \
+#   --name loadtest_server \
+#   --cpuset-cpus="0" \
+#   --cpu-quota="50000" \
+#   -m 1024m \
+#   -p 8088:8088 \
+#   cache_server:latest \
+#   cache_server localhost 5051
