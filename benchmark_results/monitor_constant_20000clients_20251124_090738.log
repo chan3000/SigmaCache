@@ -1,0 +1,19 @@
+Linux 6.8.0-87-generic (mbchan003) 	11/24/2025 	_x86_64_	(16 CPU)
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:39 AM     0   1486375    0.00    0.00    0.00    0.00    0.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:40 AM     0   1486375    0.00    0.00    0.00    0.00    0.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:41 AM     0   1486375    9.00   47.00    0.00   34.00   56.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:42 AM     0   1486375   14.00   79.00    0.00   59.00   93.00     2      1.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:43 AM     0   1486375   14.00   77.00    0.00   57.00   91.00     2      1.00      0.00 1112660    4608   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:07:44 AM     0   1486375   19.80   69.31    0.00   57.43   89.11     2      0.99      0.00 1112660    4608   0.03     -1.00     -1.00     -1.00       0  server

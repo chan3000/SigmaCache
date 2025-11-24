@@ -1,0 +1,97 @@
+Linux 6.8.0-87-generic (mbchan003) 	11/24/2025 	_x86_64_	(16 CPU)
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:43 AM     0   1486375    0.00    0.00    0.00    0.00    0.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:44 AM     0   1486375    0.00    0.00    0.00    0.00    0.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:45 AM     0   1486375    2.00    3.00    0.00    0.00    5.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:46 AM     0   1486375    3.00    5.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:47 AM     0   1486375    4.00    5.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:48 AM     0   1486375    3.00    4.00    0.00    1.00    7.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:49 AM     0   1486375    4.00    6.00    0.00    1.00   10.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:50 AM     0   1486375    5.00    3.00    0.00    1.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:51 AM     0   1486375    4.00    5.00    0.00    1.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:52 AM     0   1486375    4.00    5.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:53 AM     0   1486375    4.00    5.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:54 AM     0   1486375    4.00    4.00    0.00    1.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:55 AM     0   1486375    4.00    5.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:56 AM     0   1486375    1.00    8.00    0.00    1.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:57 AM     0   1486375    4.00    5.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:58 AM     0   1486375    4.00    5.00    0.00    2.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:05:59 AM     0   1486375    3.00    6.00    0.00    1.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:00 AM     0   1486375    0.00    8.00    0.00    3.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:01 AM     0   1486375    3.00    7.00    0.00    1.00   10.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:02 AM     0   1486375    4.00    4.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:03 AM     0   1486375    0.00   10.00    0.00    3.00   10.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:04 AM     0   1486375    0.00    8.00    0.00    1.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:05 AM     0   1486375    1.00    8.00    0.00    1.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:06 AM     0   1486375    3.00    6.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:07 AM     0   1486375    2.00    5.00    0.00    0.00    7.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:08 AM     0   1486375    3.00    6.00    0.00    0.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:09 AM     0   1486375    2.00    7.00    0.00    1.00    9.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:10 AM     0   1486375    0.00    8.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:11 AM     0   1486375    2.00    6.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:12 AM     0   1486375    3.00    5.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:13 AM     0   1486375    2.00    6.00    0.00    0.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server
+
+# Time        UID       PID    %usr %system  %guest   %wait    %CPU   CPU  minflt/s  majflt/s     VSZ     RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+09:06:14 AM     0   1486375    3.00    5.00    0.00    1.00    8.00     2      0.00      0.00 1112660    4736   0.03     -1.00     -1.00     -1.00       0  server

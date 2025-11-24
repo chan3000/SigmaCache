@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # 1. MASTER SERVER (STARTS FIRST)
+  # No dependencies, so Docker launches this immediately.
+  master_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.master
+    container_name: master_server
+    restart: always
+    cpuset: "2"               # Pinned to Core 2
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    ports:
+      - "5050:5050"
+    networks:
+      - cache_network
+
+  # 2. MYSQL DATABASE (STARTS SECOND)
+  # Waits for 'master_server' to be in 'started' state.
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    cpuset: "0"               # Pinned to Core 0
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          memory: 512M
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: KVDatabase
+      MYSQL_USER: kv_user
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --max-connections=100000 --wait-timeout=300 --interactive-timeout=300
+    networks:
+      - cache_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - master_server
+
+  # 3. CACHE SERVER (STARTS LAST)
+  # Waits for 'mysql' to be HEALTHY (ready to accept connections).
+  cache_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.cache
+    container_name: cache_server_1
+    restart: always
+    cpuset: "1"               # Pinned to Core 1
+    deploy:
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 512M
+    ports:
+      - "5051:5051"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: kv_user
+      MYSQL_PASSWORD: 123456
+      MYSQL_DATABASE: KVDatabase
+    networks:
+      - cache_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  cache_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
+# version: '3.8'
+
+# services:
+#   # 1. MASTER SERVER (Unchanged)
+#   master_server:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.master
+#     container_name: master_server
+#     restart: always
+#     cpuset: "2"
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1.0'
+#           memory: 512M
+#     ports:
+#       - "5050:5050"
+
+#   # 2. COMBINED SERVER (MySQL + Cache)
+#   combined_server:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.combined
+#     container_name: combined_server
+#     restart: always
+#     # --- RESOURCE CONSTRAINTS ---
+#     # PINNING: Giving it Core 0 AND 1 because it does double duty
+#     cpuset: "0"
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 1.5G       # 1G (DB) + 512M (App)
+#     # ---------------------------
+#     environment:
+#       # Database Setup (Handled by MySQL Image)
+#       MYSQL_ROOT_PASSWORD: rootpassword
+#       MYSQL_DATABASE: KVDatabase
+#       MYSQL_USER: kv_user
+#       MYSQL_PASSWORD: 123456
+#       # App Config (Talks to Localhost now)
+#       MYSQL_HOST: 127.0.0.1
+#       MYSQL_PORT: 3306
+#     ports:
+#       - "5051:5051"  # Your App
+#       - "3306:3306"  # Your DB (Optional, for debugging)
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+#     # No depends_on needed for MySQL anymore!
+#     depends_on:
+#       - master_server
+
+# volumes:
+#   mysql_data:

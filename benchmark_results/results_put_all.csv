@@ -1,0 +1,7 @@
+clients,workload,log_file,throughput,p50_latency,p95_latency,p99_latency,success_rate,avg_cpu,max_cpu,avg_wait,max_wait,avg_disk_write,max_disk_write
+10,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_10clients_20251124_124821.log,35142.2,0.0,0.37,0.54,100.0,84.72413793103448,91.0,3.623824451410658,7.0,0.0,0.0
+50,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_50clients_20251124_125345.log,32502.7,0.0,0.62,54.54,100.0,85.53164556962025,91.0,5.8544303797468356,10.0,0.0,0.0
+100,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_100clients_20251124_125907.log,31545.77,0.0,0.64,157.77,100.0,85.82571428571428,91.0,5.647396825396825,9.0,0.0,0.0
+200,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_200clients_20251124_130427.log,31202.08,0.0,0.65,354.15,100.0,85.86384126984127,91.0,5.942666666666667,10.0,0.0,0.0
+500,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_500clients_20251124_130947.log,31049.87,0.0,0.65,983.02,100.0,85.14503144654088,91.0,5.826823899371069,10.0,0.0,0.0
+700,put_all,/home/mbchan/MyHome/ComputerScience/DECS/Project/benchmark_results/monitor_put_all_700clients_20251124_131511.log,31041.49,0.0,0.65,1205.46,100.0,84.92824451410658,91.0,6.263134796238245,42.0,0.0,0.0
